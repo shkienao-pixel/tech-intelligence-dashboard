@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Daily Tech Intelligence Report</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: { extend: {
+        colors: { primary: '#ec5b13', 'background-light': '#f8f6f6', 'background-dark': '#221610' },
+        fontFamily: { display: ['Public Sans', 'sans-serif'] },
+        borderRadius: { DEFAULT: '0.25rem', lg: '0.5rem', xl: '0.75rem', full: '9999px' },
+      }},
+    };
+  </script>
+  <style>
+    .material-symbols-outlined { font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; }
+    .bar-anim { animation:growUp 1s ease-out forwards; transform-origin:bottom; transform:scaleY(0); }
+    @keyframes growUp { to { transform:scaleY(1); } }
+    .bar-anim:nth-child(1){animation-delay:.1s} .bar-anim:nth-child(2){animation-delay:.2s}
+    .bar-anim:nth-child(3){animation-delay:.3s} .bar-anim:nth-child(4){animation-delay:.4s}
+    .bar-anim:nth-child(5){animation-delay:.5s} .bar-anim:nth-child(6){animation-delay:.6s}
+  </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 antialiased transition-colors duration-300">
+<div class="relative flex flex-col min-h-screen">
+
+  <!-- ── Top Nav ── -->
+  <header class="sticky top-0 z-50 w-full border-b border-slate-200 dark:border-slate-800 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md px-6 lg:px-20 py-4">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <a href="index.html" class="flex items-center gap-2 text-slate-500 hover:text-primary transition-colors text-sm font-bold mr-4">
+          <span class="material-symbols-outlined text-sm">arrow_back</span>Dashboard
+        </a>
+        <div class="h-5 w-px bg-slate-300 dark:bg-slate-700"></div>
+        <div class="flex items-center gap-2.5 ml-4">
+          <div class="bg-primary p-1.5 rounded-lg flex items-center justify-center shadow-lg shadow-primary/20">
+            <span class="material-symbols-outlined text-white">insights</span>
+          </div>
+          <div>
+            <h1 class="text-lg font-extrabold tracking-tight text-slate-900 dark:text-white uppercase leading-none">Tech Intelligence</h1>
+            <p class="text-[10px] font-bold text-primary tracking-widest uppercase leading-none">Global Research Division</p>
+          </div>
+        </div>
+      </div>
+      <div class="hidden md:flex items-center gap-6">
+        <nav class="flex gap-6">
+          <a class="text-sm font-semibold hover:text-primary transition-colors" href="#">Strategic Reports</a>
+          <a class="text-sm font-semibold hover:text-primary transition-colors" href="#">Market Trends</a>
+          <a class="text-sm font-semibold hover:text-primary transition-colors" href="#">Network Analysis</a>
+        </nav>
+        <div class="h-5 w-px bg-slate-300 dark:bg-slate-700"></div>
+        <div class="flex gap-3 items-center">
+          <button data-toggle-theme class="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+            <span class="material-symbols-outlined text-slate-600 dark:text-slate-300" data-theme-icon>dark_mode</span>
+          </button>
+          <button data-action="download" class="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg text-sm font-bold transition-all shadow-lg shadow-primary/20">
+            <span class="material-symbols-outlined text-sm">picture_as_pdf</span>Download PDF
+          </button>
+          <button class="flex items-center gap-2 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-900 dark:text-white px-4 py-2 rounded-lg text-sm font-bold transition-all">
+            <span class="material-symbols-outlined text-sm">image</span>Export Image
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── Main ── -->
+  <main class="max-w-7xl mx-auto w-full px-6 lg:px-20 py-12 flex-1">
+
+    <!-- Hero -->
+    <div class="mb-12 border-l-4 border-primary pl-6">
+      <h2 class="text-4xl md:text-5xl font-black tracking-tight text-slate-900 dark:text-white mb-2">Daily Tech Intelligence Report</h2>
+      <div class="flex flex-wrap items-center gap-3 text-slate-500 dark:text-slate-400">
+        <span id="report-date" class="font-bold uppercase tracking-widest text-sm text-primary">Loading…</span>
+        <span class="h-1 w-1 rounded-full bg-slate-400"></span>
+        <span id="report-subtitle" class="text-sm font-medium italic">AI-Synthesized Research via X-Data Pipeline</span>
+      </div>
+    </div>
+
+    <!-- Executive Summary -->
+    <section class="mb-16">
+      <div class="bg-white dark:bg-slate-900/50 p-8 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div class="flex items-center gap-2 mb-6">
+          <span class="material-symbols-outlined text-primary">auto_awesome</span>
+          <h3 class="text-xl font-bold uppercase tracking-wide">Executive Summary</h3>
+        </div>
+        <div class="grid md:grid-cols-2 gap-8">
+          <p id="exec-para-1" class="text-lg leading-relaxed text-slate-700 dark:text-slate-300">
+            Generating report… Please wait while Claude analyzes the latest X posts.
+          </p>
+          <p id="exec-para-2" class="text-lg leading-relaxed text-slate-700 dark:text-slate-300">
+            This section will populate with real-time intelligence from the top 100 tech influencers once the report is generated.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Strategic Trends -->
+    <section class="mb-16">
+      <div class="flex items-center gap-2 mb-8">
+        <span class="material-symbols-outlined text-primary">trending_up</span>
+        <h3 class="text-2xl font-bold">Top 3 Strategic Trends</h3>
+      </div>
+      <!-- Dynamically populated by app.js -->
+      <div id="trends-grid" class="grid md:grid-cols-3 gap-6">
+        <!-- Placeholder cards -->
+        <div class="bg-white dark:bg-slate-900/50 p-6 rounded-xl border border-slate-200 dark:border-slate-800 animate-pulse">
+          <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-24 mb-4"></div>
+          <div class="h-6 bg-slate-200 dark:bg-slate-700 rounded w-3/4 mb-3"></div>
+          <div class="h-16 bg-slate-100 dark:bg-slate-800 rounded mb-4"></div>
+          <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-full"></div>
+        </div>
+        <div class="bg-white dark:bg-slate-900/50 p-6 rounded-xl border border-slate-200 dark:border-slate-800 animate-pulse">
+          <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-24 mb-4"></div>
+          <div class="h-6 bg-slate-200 dark:bg-slate-700 rounded w-3/4 mb-3"></div>
+          <div class="h-16 bg-slate-100 dark:bg-slate-800 rounded mb-4"></div>
+          <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-full"></div>
+        </div>
+        <div class="bg-white dark:bg-slate-900/50 p-6 rounded-xl border border-slate-200 dark:border-slate-800 animate-pulse">
+          <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-24 mb-4"></div>
+          <div class="h-6 bg-slate-200 dark:bg-slate-700 rounded w-3/4 mb-3"></div>
+          <div class="h-16 bg-slate-100 dark:bg-slate-800 rounded mb-4"></div>
+          <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-full"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Visual Insight -->
+    <section class="mb-16">
+      <div class="relative w-full h-[380px] rounded-2xl overflow-hidden group shadow-2xl">
+        <div class="w-full h-full bg-gradient-to-br from-slate-900 via-slate-800 to-background-dark">
+          <svg class="absolute inset-0 w-full h-full opacity-25" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <radialGradient id="rg1" cx="30%" cy="50%" r="50%"><stop offset="0%" stop-color="#ec5b13" stop-opacity=".5"/><stop offset="100%" stop-color="#ec5b13" stop-opacity="0"/></radialGradient>
+              <radialGradient id="rg2" cx="70%" cy="40%" r="40%"><stop offset="0%" stop-color="#1978e5" stop-opacity=".4"/><stop offset="100%" stop-color="#1978e5" stop-opacity="0"/></radialGradient>
+            </defs>
+            <ellipse cx="30%" cy="50%" rx="40%" ry="35%" fill="url(#rg1)"/>
+            <ellipse cx="70%" cy="40%" rx="35%" ry="30%" fill="url(#rg2)"/>
+            <circle cx="20%" cy="35%" r="5" fill="#ec5b13" opacity=".9"/>
+            <circle cx="35%" cy="55%" r="7" fill="#ec5b13" opacity="1"/>
+            <circle cx="50%" cy="28%" r="9" fill="#ec5b13" opacity=".8"/>
+            <circle cx="65%" cy="50%" r="6" fill="#1978e5" opacity=".9"/>
+            <circle cx="78%" cy="32%" r="5" fill="#1978e5" opacity=".8"/>
+            <circle cx="45%" cy="65%" r="4" fill="#ec5b13" opacity=".7"/>
+            <circle cx="60%" cy="68%" r="5" fill="#1978e5" opacity=".7"/>
+            <line x1="20%" y1="35%" x2="35%" y2="55%" stroke="#ec5b13" stroke-width="1.5" opacity=".5"/>
+            <line x1="35%" y1="55%" x2="50%" y2="28%" stroke="#ec5b13" stroke-width="1.5" opacity=".5"/>
+            <line x1="50%" y1="28%" x2="65%" y2="50%" stroke="#fff" stroke-width="1" opacity=".3"/>
+            <line x1="65%" y1="50%" x2="78%" y2="32%" stroke="#1978e5" stroke-width="1.5" opacity=".5"/>
+            <line x1="35%" y1="55%" x2="45%" y2="65%" stroke="#ec5b13" stroke-width="1" opacity=".4"/>
+            <line x1="65%" y1="50%" x2="60%" y2="68%" stroke="#1978e5" stroke-width="1" opacity=".4"/>
+          </svg>
+        </div>
+        <div class="absolute inset-0 bg-gradient-to-t from-background-dark via-background-dark/50 to-transparent"></div>
+        <div class="absolute bottom-0 left-0 p-10 max-w-2xl">
+          <div class="flex items-center gap-2 mb-4 text-primary">
+            <span class="material-symbols-outlined">visibility</span>
+            <span class="text-sm font-black uppercase tracking-[.2em]">Visual Insight of the Day</span>
+          </div>
+          <h3 id="vi-title" class="text-4xl font-bold text-white mb-4">Loading…</h3>
+          <p id="vi-desc" class="text-slate-200 text-base leading-relaxed">
+            Generating visual intelligence summary…
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Influencer Highlights -->
+    <section class="mb-16">
+      <div class="flex items-center justify-between mb-8">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary">group</span>
+          <h3 class="text-2xl font-bold">Influencer Intelligence Highlights</h3>
+        </div>
+        <div class="flex gap-2">
+          <button class="p-2 rounded-full border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"><span class="material-symbols-outlined">chevron_left</span></button>
+          <button class="p-2 rounded-full border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"><span class="material-symbols-outlined">chevron_right</span></button>
+        </div>
+      </div>
+      <!-- Dynamically populated by app.js -->
+      <div id="influencer-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="bg-white dark:bg-slate-900/50 p-5 rounded-xl border border-slate-200 dark:border-slate-800 animate-pulse col-span-4 h-32 flex items-center justify-center text-slate-400 text-sm">
+          <span class="material-symbols-outlined mr-2">group</span> Influencer highlights will appear after report generation
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ── Footer ── -->
+  <footer class="py-10 px-6 lg:px-20 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/30 mt-auto">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+      <div class="flex items-center gap-3 grayscale opacity-70">
+        <div class="bg-slate-800 p-1.5 rounded-lg"><span class="material-symbols-outlined text-white text-xl">insights</span></div>
+        <span class="font-black text-sm uppercase tracking-tighter">Tech Intelligence Report</span>
+      </div>
+      <div class="flex items-center gap-8 flex-wrap justify-center">
+        <p class="text-xs text-slate-500 font-medium">© 2025 Intelligence Division. All rights reserved.</p>
+        <div class="flex gap-4">
+          <a class="text-xs font-bold hover:text-primary transition-colors" href="#">Privacy Policy</a>
+          <a class="text-xs font-bold hover:text-primary transition-colors" href="#">Terms of Use</a>
+        </div>
+      </div>
+      <div class="flex gap-3">
+        <button class="size-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center hover:bg-primary hover:text-white transition-all"><span class="material-symbols-outlined text-sm">share</span></button>
+        <button class="size-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center hover:bg-primary hover:text-white transition-all"><span class="material-symbols-outlined text-sm">mail</span></button>
+      </div>
+    </div>
+  </footer>
+</div>
+<script src="js/app.js"></script>
+</body>
+</html>
