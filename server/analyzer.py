@@ -7,6 +7,13 @@ from datetime import datetime
 
 from anthropic import AsyncAnthropic
 
+# 每条推文最大字符数（避免单条超长推文撑爆 prompt）
+_MAX_TWEET_CHARS = 280
+# 发给 Claude 的最大推文条数
+_MAX_TWEETS = 80
+# posts_text 最大总字符数（约 20 000 tokens 的安全上限）
+_MAX_POSTS_CHARS = 60_000
+
 _SYSTEM = (
     "You are an elite technology intelligence analyst specializing in AI and Silicon Valley trends. "
     "Analyze X posts from top tech influencers and extract structured intelligence. "
@@ -90,37 +97,59 @@ class Analyzer:
         if not all_tweets:
             raise ValueError("No posts collected — nothing to analyze.")
 
-        # Sort by engagement (likes + 3× retweets) and take top 200
+        # Sort by engagement (likes + 3× retweets) and take top tweets
         all_tweets.sort(
             key=lambda t: t.get("likes", 0) + t.get("retweets", 0) * 3,
             reverse=True,
         )
-        top = all_tweets[:200]
+        top = all_tweets[:_MAX_TWEETS]
 
-        posts_text = "\n\n".join(
-            f"@{t['username']} ({t.get('followers', 0):,} followers)\n"
-            f"❤️ {t.get('likes', 0):,}  🔁 {t.get('retweets', 0):,}  💬 {t.get('replies', 0):,}\n"
-            f"{t['text']}"
-            for t in top
-        )
+        # 构建 posts_text，截断单条推文文本，并设置总字符上限
+        lines: list[str] = []
+        total_chars = 0
+        for t in top:
+            text = (t["text"] or "")[:_MAX_TWEET_CHARS]
+            block = (
+                f"@{t['username']} ({t.get('followers', 0):,} followers)\n"
+                f"❤️ {t.get('likes', 0):,}  🔁 {t.get('retweets', 0):,}  💬 {t.get('replies', 0):,}\n"
+                f"{text}"
+            )
+            if total_chars + len(block) > _MAX_POSTS_CHARS:
+                print(f"[Claude] posts_text 已达字符上限，仅使用前 {len(lines)} 条推文")
+                break
+            lines.append(block)
+            total_chars += len(block)
+
+        posts_text = "\n\n".join(lines)
 
         today = datetime.now().strftime("%B %d, %Y")
         prompt = _PROMPT.format(posts_text=posts_text, today=today)
 
-        print(f"[Claude] Sending {len(top)} posts for analysis…")
+        print(f"[Claude] Sending {len(lines)} posts for analysis (prompt ~{total_chars:,} chars)…")
         msg = await self._client.messages.create(
             model="claude-opus-4-6",
-            max_tokens=4096,
+            max_tokens=16000,   # 从 4096 提升到 16000，确保完整 JSON 输出不被截断
             system=_SYSTEM,
             messages=[{"role": "user", "content": prompt}],
         )
 
         raw = msg.content[0].text.strip()
-        # Strip accidental markdown code fences
+        # Strip accidental markdown code fences (```json ... ``` 或 ``` ... ```)
         if raw.startswith("```"):
-            lines = raw.splitlines()
-            raw = "\n".join(lines[1:-1] if lines[-1] == "```" else lines[1:])
+            raw_lines = raw.splitlines()
+            # 去掉首行（```json 或 ```）和末行（```）
+            end = -1 if raw_lines[-1].strip() == "```" else len(raw_lines)
+            raw = "\n".join(raw_lines[1:end])
 
-        result = json.loads(raw)
-        print("[Claude] Analysis complete.")
+        # 检测截断：如果响应不是完整 JSON，给出明确错误
+        try:
+            result = json.loads(raw)
+        except json.JSONDecodeError as exc:
+            stop_reason = getattr(msg, "stop_reason", "unknown")
+            raise ValueError(
+                f"Claude 返回的 JSON 无法解析（stop_reason={stop_reason!r}）。"
+                f"可能输出被截断。原始响应末尾：…{raw[-200:]!r}"
+            ) from exc
+
+        print(f"[Claude] Analysis complete (stop_reason={msg.stop_reason}).")
         return result
