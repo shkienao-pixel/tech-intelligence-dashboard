@@ -127,8 +127,8 @@ class Analyzer:
 
         print(f"[Claude] Sending {len(lines)} posts for analysis (prompt ~{total_chars:,} chars)…")
         msg = await self._client.messages.create(
-            model="claude-opus-4-6",
-            max_tokens=16000,   # 从 4096 提升到 16000，确保完整 JSON 输出不被截断
+            model="claude-sonnet-4-6",
+            max_tokens=16000,
             system=_SYSTEM,
             messages=[{"role": "user", "content": prompt}],
         )

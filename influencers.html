@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>X Tech Intel | Influencers</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: { extend: {
+        colors: { primary: '#1978e5', accent: '#ec5b13', 'background-light': '#f6f7f8', 'background-dark': '#111821' },
+        fontFamily: { display: ['Inter', 'sans-serif'] },
+        borderRadius: { DEFAULT: '0.25rem', lg: '0.5rem', xl: '0.75rem', full: '9999px' },
+      }},
+    };
+  </script>
+  <style>
+    .material-symbols-outlined { font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; }
+    .active-nav { background-color:rgba(236,91,19,.1); border-left:4px solid #ec5b13; color:#ec5b13; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .animate-spin { animation:spin .8s linear infinite; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+    .card-enter { animation: fadeIn .25s ease forwards; }
+  </style>
+</head>
+<body class="font-display bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 antialiased">
+
+<!-- ── Offline Banner ── -->
+<div id="backend-banner" class="hidden bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-800 px-6 py-2.5 text-center text-xs font-bold text-amber-700 dark:text-amber-400">
+  ⚡ Demo Mode — Backend offline. Run <code class="bg-amber-100 dark:bg-amber-800 px-1 rounded">start.bat</code> to manage influencers.
+</div>
+
+<div class="flex min-h-screen">
+
+  <!-- ── Sidebar ── -->
+  <aside class="w-64 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-background-dark flex flex-col fixed h-full z-40">
+    <div class="p-6 flex items-center gap-3">
+      <div class="bg-primary rounded-lg p-2 flex items-center justify-center shadow-lg shadow-primary/20">
+        <span class="material-symbols-outlined text-white">monitoring</span>
+      </div>
+      <div>
+        <h1 class="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-slate-100">X Tech Intel</h1>
+        <p class="text-[10px] text-slate-500 dark:text-slate-400 font-medium" data-i18n="brand.subtitle">INFLUENCER ENGINE</p>
+      </div>
+    </div>
+    <nav class="flex-1 px-4 mt-4 space-y-1">
+      <a href="index.html" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-accent/10 hover:text-accent transition-colors text-sm font-medium">
+        <span class="material-symbols-outlined">dashboard</span><span data-i18n="nav.dashboard">Dashboard</span>
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-accent/10 hover:text-accent transition-colors text-sm font-medium">
+        <span class="material-symbols-outlined">description</span><span data-i18n="nav.reports">Reports</span>
+      </a>
+      <a href="influencers.html" class="flex items-center gap-3 px-3 py-3 rounded-lg active-nav font-semibold text-sm">
+        <span class="material-symbols-outlined">group</span><span data-i18n="nav.influencers">Influencers</span>
+      </a>
+      <a href="settings.html" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-accent/10 hover:text-accent transition-colors text-sm font-medium">
+        <span class="material-symbols-outlined">settings</span><span data-i18n="nav.settings">Settings</span>
+      </a>
+    </nav>
+    <div class="px-4 pb-2">
+      <button data-toggle-theme class="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-sm font-medium">
+        <span class="material-symbols-outlined" data-theme-icon>dark_mode</span>
+        <span class="dark:hidden" data-i18n="nav.dark">Dark Mode</span><span class="hidden dark:inline" data-i18n="nav.light">Light Mode</span>
+      </button>
+      <button data-lang-toggle onclick="toggleLang()"
+        class="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-sm font-medium">
+        <span class="material-symbols-outlined">translate</span>中文
+      </button>
+    </div>
+    <div class="p-4 border-t border-slate-200 dark:border-slate-800">
+      <div class="flex items-center gap-3 p-2 rounded-lg bg-slate-100 dark:bg-slate-800/50">
+        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white font-bold text-sm flex-shrink-0">AC</div>
+        <div class="overflow-hidden">
+          <p class="text-xs font-bold truncate">Alex Chen</p>
+          <p class="text-[10px] text-slate-500">Senior Analyst · Pro</p>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── Main ── -->
+  <main class="ml-64 flex-1 p-8 min-h-screen">
+
+    <!-- Page Header -->
+    <div class="flex flex-wrap justify-between items-start gap-4 mb-8">
+      <div>
+        <h2 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
+          <span data-i18n="inf.title">Influencer Management</span>
+          <span id="count-badge" class="text-sm font-black px-3 py-1 bg-primary/10 text-primary rounded-full">—</span>
+        </h2>
+        <p class="text-slate-500 dark:text-slate-400 mt-1 text-sm" data-i18n="inf.subtitle">Manage the X accounts monitored for daily intelligence reports.</p>
+      </div>
+    </div>
+
+    <!-- Add Influencer Card -->
+    <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-6 mb-8">
+      <h3 class="font-bold text-slate-900 dark:text-white text-sm uppercase tracking-wider mb-4 flex items-center gap-2">
+        <span class="material-symbols-outlined text-primary">person_add</span><span data-i18n="inf.add_title">Add Influencer</span>
+      </h3>
+      <div class="flex gap-3 flex-wrap">
+        <div class="relative flex-1 min-w-60">
+          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm select-none">@</span>
+          <input id="add-input" type="text" placeholder="username (e.g. karpathy)" data-i18n-ph="inf.add_ph"
+            class="w-full pl-7 pr-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600
+                   bg-slate-50 dark:bg-slate-700 text-sm font-medium focus:outline-none
+                   focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"/>
+        </div>
+        <button id="add-btn"
+          class="bg-primary hover:bg-primary/90 text-white px-5 py-2.5 rounded-lg font-bold text-sm
+                 shadow-lg shadow-primary/20 transition-all flex items-center gap-2 disabled:opacity-50">
+          <span class="material-symbols-outlined text-sm">add</span><span data-i18n="inf.add_btn">Add to List</span>
+        </button>
+      </div>
+      <p id="add-error" class="hidden mt-2 text-xs font-bold text-red-500"></p>
+    </div>
+
+    <!-- Search + Filter bar -->
+    <div class="flex items-center gap-3 mb-6">
+      <div class="relative flex-1 max-w-sm">
+        <span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-lg">search</span>
+        <input id="search-input" type="text" placeholder="Search influencers…" data-i18n-ph="inf.search_ph"
+          class="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200 dark:border-slate-600
+                 bg-white dark:bg-slate-800 text-sm font-medium focus:outline-none
+                 focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"/>
+      </div>
+      <p id="filter-count" class="text-xs font-bold text-slate-400 uppercase tracking-wider"></p>
+    </div>
+
+    <!-- Influencer Grid -->
+    <div id="influencer-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+      <!-- populated by JS -->
+    </div>
+
+    <!-- Empty State -->
+    <div id="empty-state" class="hidden text-center py-20">
+      <span class="material-symbols-outlined text-5xl text-slate-300 dark:text-slate-600">group_off</span>
+      <p class="text-slate-400 font-bold mt-3">No influencers found</p>
+    </div>
+
+  </main>
+</div>
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<script>
+const API = "http://localhost:8000/api";
+let allInfluencers = [];
+let backendOnline  = false;
+
+// ── Demo fallback list ─────────────────────────────────────────────────────
+const DEMO_LIST = [
+  "karpathy","ylecun","sama","demishassabis","jeffdean","drfeifei","AndrewYNg",
+  "GaryMarcus","emollick","fchollet","drjimfan","elonmusk","JensenHuang",
+  "sundarpichai","satyanadella","OpenAI","GoogleDeepMind","AnthropicAI",
+  "MetaAI","MistralAI","huggingface","xai","perplexity_ai","jeremyphoward",
+  "swyx","timnitGebru","benedictevans","stratechery","SemiAnalysis",
+];
+
+// ── Theme ─────────────────────────────────────────────────────────────────
+function applyTheme(dark) { document.documentElement.classList.toggle("dark", dark); }
+function toggleTheme() {
+  const dark = !document.documentElement.classList.contains("dark");
+  applyTheme(dark);
+  localStorage.setItem("theme", dark ? "dark" : "light");
+  updateThemeIcons();
+}
+function updateThemeIcons() {
+  const dark = document.documentElement.classList.contains("dark");
+  document.querySelectorAll("[data-theme-icon]").forEach(el => {
+    el.textContent = dark ? "light_mode" : "dark_mode";
+  });
+}
+(function() {
+  const saved = localStorage.getItem("theme");
+  const sys   = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  applyTheme(saved === "dark" || (!saved && sys));
+})();
+
+// ── Toast ─────────────────────────────────────────────────────────────────
+function showToast(msg, type = "info") {
+  const colors = { info: "bg-primary text-white", success: "bg-green-500 text-white", error: "bg-red-500 text-white" };
+  const icons  = { info: "info", success: "check_circle", error: "error" };
+  const el = document.createElement("div");
+  el.className = `fixed bottom-6 right-6 z-50 px-5 py-3 rounded-xl shadow-xl text-sm font-bold
+    flex items-center gap-2 transition-all duration-300 translate-y-10 opacity-0 ${colors[type] || colors.info}`;
+  el.innerHTML = `<span class="material-symbols-outlined text-sm">${icons[type] || "info"}</span>${msg}`;
+  document.body.appendChild(el);
+  requestAnimationFrame(() => el.classList.remove("translate-y-10", "opacity-0"));
+  setTimeout(() => { el.classList.add("translate-y-10", "opacity-0"); setTimeout(() => el.remove(), 300); }, 3500);
+}
+
+// ── API helpers ───────────────────────────────────────────────────────────
+async function apiFetch(path, opts = {}) {
+  const res = await fetch(API + path, {
+    ...opts,
+    headers: { "Content-Type": "application/json", ...(opts.headers || {}) },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail || res.statusText);
+  }
+  return res.json();
+}
+
+// ── Avatar color by username ───────────────────────────────────────────────
+const AVATAR_COLORS = [
+  "from-blue-500 to-blue-700", "from-orange-400 to-accent",
+  "from-emerald-500 to-emerald-700", "from-purple-500 to-purple-700",
+  "from-pink-500 to-pink-700", "from-amber-400 to-orange-500",
+  "from-cyan-500 to-cyan-700", "from-indigo-500 to-indigo-700",
+];
+function avatarColor(username) {
+  let hash = 0;
+  for (const c of username) hash = (hash * 31 + c.charCodeAt(0)) & 0xffff;
+  return AVATAR_COLORS[hash % AVATAR_COLORS.length];
+}
+function initials(username) {
+  return username.slice(0, 2).toUpperCase();
+}
+
+// ── Render grid ───────────────────────────────────────────────────────────
+function renderGrid(list) {
+  const grid  = document.getElementById("influencer-grid");
+  const empty = document.getElementById("empty-state");
+  const fc    = document.getElementById("filter-count");
+
+  if (!list.length) {
+    grid.innerHTML = "";
+    empty.classList.remove("hidden");
+    fc.textContent = "0 results";
+    return;
+  }
+  empty.classList.add("hidden");
+  fc.textContent = list.length === allInfluencers.length
+    ? `${list.length} influencers`
+    : `${list.length} of ${allInfluencers.length}`;
+
+  grid.innerHTML = list.map(u => `
+    <div class="card-enter bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700
+                shadow-sm hover:shadow-md hover:border-primary/40 transition-all group flex flex-col p-4 gap-3"
+         data-username="${u.toLowerCase()}">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-gradient-to-br ${avatarColor(u)}
+                    flex items-center justify-center text-white font-bold text-sm flex-shrink-0
+                    ring-2 ring-white dark:ring-slate-800 shadow-sm">
+          ${initials(u)}
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-bold text-slate-900 dark:text-white truncate">@${escHtml(u)}</p>
+        </div>
+      </div>
+      <div class="flex gap-2 pt-1 border-t border-slate-100 dark:border-slate-700">
+        <a href="https://x.com/${encodeURIComponent(u)}" target="_blank" rel="noopener"
+           class="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg
+                  bg-slate-100 dark:bg-slate-700 hover:bg-primary/10 hover:text-primary
+                  text-slate-600 dark:text-slate-300 text-xs font-bold transition-colors">
+          <svg class="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.911-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+          </svg>
+          View on X
+        </a>
+        ${backendOnline ? `
+        <button onclick="deleteInfluencer('${escAttr(u)}')"
+          class="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-red-50 dark:hover:bg-red-900/30
+                 hover:text-red-500 text-slate-400 transition-colors" title="Remove">
+          <span class="material-symbols-outlined text-base leading-none">delete</span>
+        </button>` : ""}
+      </div>
+    </div>`).join("");
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+function escAttr(s) { return String(s).replace(/'/g, "\\'"); }
+
+// ── Load influencers ──────────────────────────────────────────────────────
+async function loadInfluencers() {
+  const banner = document.getElementById("backend-banner");
+  try {
+    const data = await apiFetch("/influencers");
+    backendOnline = true;
+    if (banner) banner.classList.add("hidden");
+    allInfluencers = data.influencers;
+  } catch {
+    backendOnline = false;
+    if (banner) banner.classList.remove("hidden");
+    allInfluencers = DEMO_LIST;
+  }
+  document.getElementById("count-badge").textContent = allInfluencers.length + " accounts";
+  document.getElementById("add-btn").disabled = !backendOnline;
+  renderGrid(allInfluencers);
+}
+
+// ── Add influencer ────────────────────────────────────────────────────────
+async function addInfluencer() {
+  const input = document.getElementById("add-input");
+  const errEl = document.getElementById("add-error");
+  const btn   = document.getElementById("add-btn");
+  const username = input.value.trim().replace(/^@/, "");
+
+  errEl.classList.add("hidden");
+
+  if (!username) {
+    errEl.textContent = "Please enter a username.";
+    errEl.classList.remove("hidden");
+    return;
+  }
+  if (!/^[A-Za-z0-9_]{1,50}$/.test(username)) {
+    errEl.textContent = "Invalid username — only letters, numbers and underscores allowed.";
+    errEl.classList.remove("hidden");
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = `<span class="material-symbols-outlined text-sm animate-spin">refresh</span>Adding…`;
+
+  try {
+    const data = await apiFetch("/influencers", {
+      method: "POST",
+      body: JSON.stringify({ username }),
+    });
+    allInfluencers = data.influencers;
+    document.getElementById("count-badge").textContent = allInfluencers.length + " accounts";
+    input.value = "";
+    applySearch();
+    showToast(`@${username} added successfully!`, "success");
+  } catch (e) {
+    errEl.textContent = e.message;
+    errEl.classList.remove("hidden");
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<span class="material-symbols-outlined text-sm">add</span>Add to List`;
+  }
+}
+
+// ── Delete influencer ─────────────────────────────────────────────────────
+async function deleteInfluencer(username) {
+  if (!confirm(`Remove @${username} from the monitoring list?`)) return;
+  try {
+    const data = await apiFetch(`/influencers/${encodeURIComponent(username)}`, { method: "DELETE" });
+    allInfluencers = data.influencers;
+    document.getElementById("count-badge").textContent = allInfluencers.length + " accounts";
+    // Animate card out
+    const card = document.querySelector(`[data-username="${username.toLowerCase()}"]`);
+    if (card) {
+      card.style.transition = "opacity .2s, transform .2s";
+      card.style.opacity = "0";
+      card.style.transform = "scale(0.9)";
+      setTimeout(() => applySearch(), 220);
+    } else {
+      applySearch();
+    }
+    showToast(`@${username} removed.`, "success");
+  } catch (e) {
+    showToast(e.message, "error");
+  }
+}
+
+// ── Search / filter ───────────────────────────────────────────────────────
+function applySearch() {
+  const q = document.getElementById("search-input").value.trim().toLowerCase();
+  const filtered = q ? allInfluencers.filter(u => u.toLowerCase().includes(q)) : allInfluencers;
+  renderGrid(filtered);
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────
+document.addEventListener("DOMContentLoaded", async () => {
+  updateThemeIcons();
+  document.querySelectorAll("[data-toggle-theme]").forEach(el => el.addEventListener("click", toggleTheme));
+
+  await loadInfluencers();
+
+  document.getElementById("add-btn").addEventListener("click", addInfluencer);
+  document.getElementById("add-input").addEventListener("keydown", e => {
+    if (e.key === "Enter") addInfluencer();
+  });
+  document.getElementById("search-input").addEventListener("input", applySearch);
+});
+</script>
+<script src="js/lang.js"></script>
+</body>
+</html>

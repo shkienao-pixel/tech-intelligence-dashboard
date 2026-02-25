@@ -87,11 +87,19 @@ function showToast(msg, type = "info") {
 
 // ── API helpers ───────────────────────────────────────────────────────────────
 async function apiFetch(path, opts = {}) {
-  const res = await fetch(API + path, { ...opts, headers: { "Content-Type": "application/json", ...(opts.headers || {}) } });
+  const method = (opts.method || "GET").toUpperCase();
+  // Only set Content-Type for requests that carry a body
+  const needsContentType = opts.body !== undefined && opts.body !== null;
+  const headers = needsContentType
+    ? { "Content-Type": "application/json", ...(opts.headers || {}) }
+    : { ...(opts.headers || {}) };
+  const res = await fetch(API + path, { ...opts, headers });
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ detail: res.statusText }));
-    throw new Error(err.detail || res.statusText);
+    const err = await res.json().catch(() => ({ detail: `HTTP ${res.status} ${res.statusText}` }));
+    throw new Error(err.detail || `HTTP ${res.status} ${res.statusText}`);
   }
+  // 204 No Content has no body
+  if (res.status === 204) return null;
   return res.json();
 }
 
@@ -207,7 +215,7 @@ function renderReportsTable(reports) {
   tbody.innerHTML = reports.map(r => {
     const scoreClass = SCORE_STYLES[r.score] || SCORE_STYLES["STABLE"];
     return `
-    <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+    <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors" id="report-row-${r.id}">
       <td class="px-6 py-5">
         <div class="flex items-center gap-3">
           <span class="material-symbols-outlined text-slate-400">picture_as_pdf</span>
@@ -228,8 +236,11 @@ function renderReportsTable(reports) {
           <button onclick="viewReport('${r.id}')" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors" title="View">
             <span class="material-symbols-outlined text-slate-500 text-lg">visibility</span>
           </button>
-          <button onclick="showToast('Preparing PDF…','info')" class="p-2 hover:bg-primary/10 text-primary rounded-lg transition-colors" title="Download">
+          <button onclick="downloadReport('${r.id}')" class="p-2 hover:bg-primary/10 text-primary rounded-lg transition-colors" title="Download">
             <span class="material-symbols-outlined text-lg">download</span>
+          </button>
+          <button onclick="deleteReport('${r.id}')" class="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-400 hover:text-red-600 rounded-lg transition-colors" title="Delete">
+            <span class="material-symbols-outlined text-lg">delete</span>
           </button>
         </div>
       </td>
@@ -237,8 +248,44 @@ function renderReportsTable(reports) {
   }).join("");
 }
 
+async function deleteReport(id) {
+  const msg = typeof t === "function"
+    ? t("reports.delete_confirm")
+    : "Delete this report? This action cannot be undone.";
+  if (!confirm(msg)) return;
+
+  try {
+    const url = `${API}/report/${id}`;
+    console.log("[deleteReport] DELETE", url);
+    const res = await fetch(url, { method: "DELETE" });
+    console.log("[deleteReport] response status:", res.status);
+    if (!res.ok) {
+      const errBody = await res.json().catch(() => ({ detail: `HTTP ${res.status} ${res.statusText}` }));
+      console.error("[deleteReport] error body:", errBody);
+      throw new Error(errBody.detail || `HTTP ${res.status}`);
+    }
+    // Fade out the row for smooth UX
+    const row = document.getElementById(`report-row-${id}`);
+    if (row) {
+      row.style.transition = "opacity 0.3s";
+      row.style.opacity = "0";
+      await new Promise(r => setTimeout(r, 300));
+    }
+    showToast(typeof t === "function" ? t("reports.deleted") : "Report deleted.", "success");
+    await loadDashboard();
+  } catch (e) {
+    console.error("[deleteReport] caught:", e);
+    showToast(`${typeof t === "function" ? t("reports.delete_failed") : "Delete failed"}: ${e.message}`, "error");
+  }
+}
+
 function viewReport(id) {
   window.location.href = `report.html?id=${id}`;
+}
+
+function downloadReport(id) {
+  const win = window.open(`report.html?id=${id}&download=1`, "_blank");
+  if (!win) showToast("Please allow popups to download PDF.", "error");
 }
 function escHtml(s) {
   return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
@@ -313,6 +360,9 @@ async function loadReportPage() {
   try {
     const report = await apiFetch(endpoint);
     renderReportPage(report);
+    if (params.get("download") === "1") {
+      setTimeout(() => window.print(), 800);
+    }
   } catch (e) {
     if (e.message.includes("No reports yet")) {
       showToast("No reports yet. Go to Dashboard and click Generate.", "info");
@@ -423,9 +473,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   const genBtn = document.getElementById("generate-btn");
   if (genBtn) genBtn.addEventListener("click", startGenerate);
 
-  // Download buttons
+  // Download buttons (report.html page)
   document.querySelectorAll("[data-action='download']").forEach(btn => {
-    btn.addEventListener("click", () => showToast("Preparing PDF download…", "info"));
+    btn.addEventListener("click", () => window.print());
   });
 
   // Check backend
