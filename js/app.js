@@ -105,6 +105,7 @@ async function apiFetch(path, opts = {}) {
 
 // ── Status Banner ─────────────────────────────────────────────────────────────
 let backendOnline = false;
+let _dashboardData = null;
 
 async function checkBackendStatus() {
   const banner = document.getElementById("backend-banner");
@@ -139,11 +140,12 @@ async function loadDashboard() {
   if (!backendOnline) return;
   try {
     const data = await apiFetch("/dashboard");
+    _dashboardData = data;
     renderDashboard(data);
   } catch (e) {
-    // No report yet — show hint
     if (e.message.includes("No report yet")) {
-      showToast("No reports yet — click 'Generate Daily Report' to fetch live data.", "info");
+      _dashboardData = null;
+      renderReportsTable([]);
     }
   }
 }
@@ -167,7 +169,7 @@ function renderDashboard(data) {
   if (trending_topics?.length) renderTrendingTopics(trending_topics);
 
   // Reports table
-  if (recent_reports?.length) renderReportsTable(recent_reports);
+  renderReportsTable(recent_reports || []);
 }
 
 function setCounter(id, value) {
@@ -212,6 +214,11 @@ const SCORE_STYLES = {
 function renderReportsTable(reports) {
   const tbody = document.getElementById("reports-tbody");
   if (!tbody) return;
+  if (!reports.length) {
+    tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-10 text-center text-slate-400 text-sm" data-i18n="reports.waiting">
+      ${typeof t === "function" ? t("reports.waiting") : "No reports yet — click Generate Daily Report to fetch live data."}</td></tr>`;
+    return;
+  }
   tbody.innerHTML = reports.map(r => {
     const scoreClass = SCORE_STYLES[r.score] || SCORE_STYLES["STABLE"];
     return `
@@ -220,8 +227,8 @@ function renderReportsTable(reports) {
         <div class="flex items-center gap-3">
           <span class="material-symbols-outlined text-slate-400">picture_as_pdf</span>
           <div>
-            <p class="text-sm font-bold text-slate-900 dark:text-white">${escHtml(r.title)}</p>
-            <p class="text-[10px] text-slate-500">${escHtml(r.subtitle || "")}</p>
+            <p class="text-sm font-bold text-slate-900 dark:text-white">${escHtml(_pick(r, "title"))}</p>
+            <p class="text-[10px] text-slate-500">${escHtml(_pick(r, "subtitle") || "")}</p>
           </div>
         </div>
       </td>
@@ -350,6 +357,8 @@ function pollJobStatus(jobId, btn) {
 }
 
 // ── Report Page ───────────────────────────────────────────────────────────────
+let _currentReport = null;
+
 async function loadReportPage() {
   if (!backendOnline) return;
 
@@ -359,6 +368,7 @@ async function loadReportPage() {
 
   try {
     const report = await apiFetch(endpoint);
+    _currentReport = report;
     renderReportPage(report);
     if (params.get("download") === "1") {
       setTimeout(() => window.print(), 800);
@@ -370,13 +380,25 @@ async function loadReportPage() {
   }
 }
 
+// Pick zh_ field when Chinese is active, fall back to English field
+function _pick(obj, key) {
+  const isZh = document.documentElement.lang === "zh-CN";
+  return (isZh && obj?.["zh_" + key]) || obj?.[key] || "";
+}
+
 function renderReportPage(r) {
-  setText("report-date", new Date(r.generated_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }));
-  setText("report-subtitle", `AI-Synthesized Research · ${(r.total_influencers || 0)} Influencers · ${(r.total_posts || 0).toLocaleString()} Posts Scanned`);
-  setText("exec-para-1", r.executive_summary?.paragraph1 || "");
-  setText("exec-para-2", r.executive_summary?.paragraph2 || "");
-  setText("vi-title", r.visual_insight?.title || "");
-  setText("vi-desc",  r.visual_insight?.description || "");
+  const isZh = document.documentElement.lang === "zh-CN";
+  const dateLocale = isZh ? "zh-CN" : "en-US";
+  const dateOpts = { month: "long", day: "numeric", year: "numeric" };
+  setText("report-date", new Date(r.generated_at).toLocaleDateString(dateLocale, dateOpts));
+  const meta = isZh
+    ? `AI 情报分析 · ${(r.total_influencers || 0)} 位博主 · ${(r.total_posts || 0).toLocaleString()} 条帖子`
+    : `AI-Synthesized Research · ${(r.total_influencers || 0)} Influencers · ${(r.total_posts || 0).toLocaleString()} Posts Scanned`;
+  setText("report-subtitle", meta);
+  setText("exec-para-1", _pick(r.executive_summary, "paragraph1"));
+  setText("exec-para-2", _pick(r.executive_summary, "paragraph2"));
+  setText("vi-title", _pick(r.visual_insight, "title"));
+  setText("vi-desc",  _pick(r.visual_insight, "description"));
 
   renderTrendsGrid(r.strategic_trends || []);
   renderInfluencers(r.influencer_highlights || []);
@@ -412,11 +434,11 @@ function renderTrendsGrid(trends) {
           <span class="material-symbols-outlined text-sm">${arrows[dir]}</span> ${t.change}
         </span>
       </div>
-      <h4 class="text-xl font-bold mb-3 group-hover:text-primary transition-colors">${escHtml(t.name)}</h4>
+      <h4 class="text-xl font-bold mb-3 group-hover:text-primary transition-colors">${escHtml(_pick(t, "name"))}</h4>
       <div class="h-16 w-full flex items-end gap-1 mb-4">
         ${[30,45,40,65,85,100].map(h => `<div class="bar-anim bg-primary/20 w-full rounded-t-sm" style="height:${h}%"></div>`).join("")}
       </div>
-      <p class="text-sm text-slate-600 dark:text-slate-400">${escHtml(t.description)}</p>
+      <p class="text-sm text-slate-600 dark:text-slate-400">${escHtml(_pick(t, "description"))}</p>
     </div>`;
   }).join("");
 }
@@ -447,10 +469,10 @@ function renderInfluencers(highlights) {
             <span class="font-bold text-sm truncate">@${escHtml(h.username)}</span>
             <span class="material-symbols-outlined text-blue-400 text-[14px] flex-shrink-0">verified</span>
           </div>
-          <span class="text-[10px] text-slate-500 uppercase font-bold tracking-tight">${escHtml(h.role)}</span>
+          <span class="text-[10px] text-slate-500 uppercase font-bold tracking-tight">${escHtml(_pick(h, "role"))}</span>
         </div>
       </div>
-      <p class="text-sm text-slate-700 dark:text-slate-300 italic mb-4 flex-grow">"${escHtml(h.quote)}"</p>
+      <p class="text-sm text-slate-700 dark:text-slate-300 italic mb-4 flex-grow">"${escHtml(_pick(h, "quote"))}"</p>
       <div class="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-between
                   text-[10px] font-bold text-slate-400 uppercase tracking-widest">
         <span>${Number(h.likes || 0).toLocaleString()} Likes</span>
@@ -484,10 +506,22 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Dashboard page
   if (document.getElementById("reports-tbody")) {
     await loadDashboard();
+    // Re-render report list when language is toggled
+    const _origToggleLangDash = window.toggleLang;
+    window.toggleLang = function() {
+      _origToggleLangDash();
+      if (_dashboardData) renderDashboard(_dashboardData);
+    };
   }
 
   // Report page
   if (document.getElementById("exec-para-1")) {
     await loadReportPage();
+    // Re-render report content when language is toggled
+    const _origToggleLang = window.toggleLang;
+    window.toggleLang = function() {
+      _origToggleLang();
+      if (_currentReport) renderReportPage(_currentReport);
+    };
   }
 });

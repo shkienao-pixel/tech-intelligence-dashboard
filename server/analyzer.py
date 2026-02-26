@@ -14,6 +14,7 @@ _MAX_TWEETS = 80
 # posts_text 最大总字符数（约 20 000 tokens 的安全上限）
 _MAX_POSTS_CHARS = 60_000
 
+# ── Pass 1: English analysis (原始 prompt，保持质量和速度) ─────────────────────
 _SYSTEM = (
     "You are an elite technology intelligence analyst specializing in AI and Silicon Valley trends. "
     "Analyze X posts from top tech influencers and extract structured intelligence. "
@@ -80,6 +81,101 @@ Rules:
 - For likes/shares use the actual numbers from the data
 """
 
+# ── Pass 2: Chinese translation (轻量翻译，用快速模型) ─────────────────────────
+_TRANSLATE_SYSTEM = (
+    "You are a professional Chinese translator. "
+    "Translate the given JSON fields to Chinese. "
+    "Return valid JSON only — no markdown, no extra text. "
+    "CRITICAL: When the Chinese translation contains double-quote characters (\"), "
+    "you MUST escape them as \\\" inside JSON string values. "
+    "Use Chinese quotation marks \u300c\u300d or \u201c\u201d instead of ASCII \" "
+    "whenever possible to avoid escaping issues."
+)
+
+
+def _build_translate_prompt(report: dict) -> str:
+    """用字符串拼接构建翻译 prompt，避免 .format() 在内容含 { } 时崩溃。"""
+    es = report.get("executive_summary", {})
+    vi = report.get("visual_insight", {})
+    trends = report.get("strategic_trends", [])
+    highlights = report.get("influencer_highlights", [])
+
+    subtitle       = report.get("subtitle", "")
+    paragraph1     = es.get("paragraph1", "")
+    paragraph2     = es.get("paragraph2", "")
+    vi_title       = vi.get("title", "")
+    vi_description = vi.get("description", "")
+
+    trends_text = "\n".join(
+        f"{i+1}. name: {t.get('name','')}\n   description: {t.get('description','')}"
+        for i, t in enumerate(trends)
+    )
+    highlights_text = "\n".join(
+        f"{i+1}. role: {h.get('role','')}\n   quote: {h.get('quote','')}"
+        for i, h in enumerate(highlights)
+    )
+
+    # 拼接代替 .format()，防止内容里的 { } 触发 KeyError
+    return (
+        'Translate the following English texts to Chinese. '
+        'Return a JSON object with exactly these keys:\n\n'
+        '{\n'
+        '  "zh_subtitle": "<translated subtitle>",\n'
+        '  "zh_paragraph1": "<translated paragraph1>",\n'
+        '  "zh_paragraph2": "<translated paragraph2>",\n'
+        '  "zh_visual_insight_title": "<translated visual insight title>",\n'
+        '  "zh_visual_insight_description": "<translated visual insight description>",\n'
+        '  "zh_trends": [\n'
+        '    {"zh_name": "<translated name>", "zh_description": "<translated description>"}\n'
+        '  ],\n'
+        '  "zh_highlights": [\n'
+        '    {"zh_role": "<translated role>", "zh_quote": "<translated quote>"}\n'
+        '  ]\n'
+        '}\n\n'
+        '=== TEXTS TO TRANSLATE ===\n'
+        'subtitle: ' + subtitle + '\n\n'
+        'paragraph1: ' + paragraph1 + '\n\n'
+        'paragraph2: ' + paragraph2 + '\n\n'
+        'visual_insight title: ' + vi_title + '\n\n'
+        'visual_insight description: ' + vi_description + '\n\n'
+        'strategic_trends:\n' + trends_text + '\n\n'
+        'influencer_highlights:\n' + highlights_text + '\n'
+    )
+
+
+def _merge_translations(report: dict, trans: dict) -> dict:
+    """将翻译结果合并到报告 dict 中（不修改原始 report，返回新 dict）。"""
+    result = dict(report)
+    result["zh_subtitle"] = trans.get("zh_subtitle", "")
+
+    es = dict(result.get("executive_summary", {}))
+    es["zh_paragraph1"] = trans.get("zh_paragraph1", "")
+    es["zh_paragraph2"] = trans.get("zh_paragraph2", "")
+    result["executive_summary"] = es
+
+    vi = dict(result.get("visual_insight", {}))
+    vi["zh_title"] = trans.get("zh_visual_insight_title", "")
+    vi["zh_description"] = trans.get("zh_visual_insight_description", "")
+    result["visual_insight"] = vi
+
+    zh_trends = trans.get("zh_trends", [])
+    trends = [dict(t) for t in result.get("strategic_trends", [])]
+    for i, t in enumerate(trends):
+        if i < len(zh_trends):
+            t["zh_name"] = zh_trends[i].get("zh_name", "")
+            t["zh_description"] = zh_trends[i].get("zh_description", "")
+    result["strategic_trends"] = trends
+
+    zh_highlights = trans.get("zh_highlights", [])
+    highlights = [dict(h) for h in result.get("influencer_highlights", [])]
+    for i, h in enumerate(highlights):
+        if i < len(zh_highlights):
+            h["zh_role"] = zh_highlights[i].get("zh_role", "")
+            h["zh_quote"] = zh_highlights[i].get("zh_quote", "")
+    result["influencer_highlights"] = highlights
+
+    return result
+
 
 class Analyzer:
     def __init__(self) -> None:
@@ -125,25 +221,23 @@ class Analyzer:
         today = datetime.now().strftime("%B %d, %Y")
         prompt = _PROMPT.format(posts_text=posts_text, today=today)
 
-        print(f"[Claude] Sending {len(lines)} posts for analysis (prompt ~{total_chars:,} chars)…")
+        # ── Pass 1: 英文分析 ───────────────────────────────────────────────────
+        print(f"[Claude] Pass 1 — analyzing {len(lines)} posts (~{total_chars:,} chars)…")
         msg = await self._client.messages.create(
             model="claude-sonnet-4-6",
-            max_tokens=16000,
+            max_tokens=4096,
             system=_SYSTEM,
             messages=[{"role": "user", "content": prompt}],
         )
 
         raw = msg.content[0].text.strip()
-        # Strip accidental markdown code fences (```json ... ``` 或 ``` ... ```)
         if raw.startswith("```"):
             raw_lines = raw.splitlines()
-            # 去掉首行（```json 或 ```）和末行（```）
             end = -1 if raw_lines[-1].strip() == "```" else len(raw_lines)
             raw = "\n".join(raw_lines[1:end])
 
-        # 检测截断：如果响应不是完整 JSON，给出明确错误
         try:
-            result = json.loads(raw)
+            report = json.loads(raw)
         except json.JSONDecodeError as exc:
             stop_reason = getattr(msg, "stop_reason", "unknown")
             raise ValueError(
@@ -151,5 +245,34 @@ class Analyzer:
                 f"可能输出被截断。原始响应末尾：…{raw[-200:]!r}"
             ) from exc
 
-        print(f"[Claude] Analysis complete (stop_reason={msg.stop_reason}).")
-        return result
+        print(f"[Claude] Pass 1 complete (stop_reason={msg.stop_reason}).")
+
+        # ── Pass 2: 中文翻译（用 Haiku，快且省钱）─────────────────────────────
+        print("[Claude] Pass 2 — translating to Chinese…")
+        try:
+            trans_prompt = _build_translate_prompt(report)
+            trans_msg = await self._client.messages.create(
+                model="claude-haiku-4-5-20251001",
+                max_tokens=2048,
+                system=_TRANSLATE_SYSTEM,
+                messages=[{"role": "user", "content": trans_prompt}],
+            )
+            trans_raw = trans_msg.content[0].text.strip()
+            if trans_raw.startswith("```"):
+                trans_lines = trans_raw.splitlines()
+                end = -1 if trans_lines[-1].strip() == "```" else len(trans_lines)
+                trans_raw = "\n".join(trans_lines[1:end])
+            try:
+                trans = json.loads(trans_raw)
+            except json.JSONDecodeError as je:
+                # 记录详细错误帮助调试，然后抛出让外层 except 捕获
+                print(f"[Claude] Pass 2 JSON parse error: {je}")
+                print(f"[Claude] Pass 2 raw (first 300): {trans_raw[:300]!r}")
+                raise
+            report = _merge_translations(report, trans)
+            print(f"[Claude] Pass 2 complete (stop_reason={trans_msg.stop_reason}).")
+        except Exception as e:
+            # 翻译失败不影响主报告，只记录警告
+            print(f"[Claude] Pass 2 translation failed (non-fatal): {e}")
+
+        return report

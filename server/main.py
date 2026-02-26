@@ -23,7 +23,7 @@ from influencers import TOP_TECH_INFLUENCERS
 from x_client import XClient, XClientError
 
 # ── Directories ───────────────────────────────────────────────────────────────
-BASE_DIR         = Path(__file__).parent
+BASE_DIR         = Path(__file__).resolve().parent
 DATA_DIR         = BASE_DIR / "data"
 REPORTS_DIR      = DATA_DIR / "reports"
 INFLUENCERS_FILE = DATA_DIR / "influencers.json"
@@ -95,7 +95,9 @@ def _list_reports(limit: int = 20) -> list[dict]:
             result.append({
                 "id":          d.get("id", f.stem),
                 "title":       d.get("title", "Daily Intel Report"),
+                "zh_title":    d.get("zh_title", ""),
                 "subtitle":    d.get("subtitle", ""),
+                "zh_subtitle": d.get("zh_subtitle", ""),
                 "date":        (d.get("generated_at") or "")[:10],
                 "total_posts": d.get("total_posts", 0),
                 "score":       "HIGH INTEL",
@@ -336,4 +338,7 @@ async def api_save_settings(body: dict):
 
 # ── Entry Point ───────────────────────────────────────────────────────────────
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    import sys
+    sys.path.insert(0, str(BASE_DIR))
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True,
+                reload_dirs=[str(BASE_DIR)])
